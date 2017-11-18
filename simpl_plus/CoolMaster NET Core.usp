@@ -1,0 +1,42 @@
+/*
+Dealer Name: Ask The Advisors
+Programmer: Ryan French
+*/
+
+#SYMBOL_NAME "CoolMaster Net Core v1.0"
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+#PRINT_TO_TRACE
+#USER_SIMPLSHARP_LIBRARY "CoolMaster Net Controller"
+
+//=====// I/O //=====//
+
+DIGITAL_OUTPUT Connected_Fb;
+
+STRING_PARAMETER _SKIP_,
+			     IP_Address[15];
+
+INTEGER_PARAMETER Port;
+
+//=====// VARIABLES //=====//
+
+//=====// FUNCTIONS //=====//
+
+//=====// EVENTS //=====//
+
+CALLBACK FUNCTION ConnectionStatusHandler (INTEGER _state) {
+	Connected_Fb = _state;
+}
+
+//=====// MAIN //=====//
+
+FUNCTION Main () {
+
+	WAITFORINITIALIZATIONCOMPLETE();
+
+	RegisterDelegate(Core, ConnectionStatusEvent, ConnectionStatusHandler);
+
+	Core.TCPClientSettings(IP_Address, Port);
+
+}

@@ -1,0 +1,233 @@
+/*
+Dealer Name: Ask The Advisors
+Programmer: Ryan French
+*/
+
+#SYMBOL_NAME "CoolMaster Net Zone v1.0"
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+#PRINT_TO_TRACE
+#USER_SIMPLSHARP_LIBRARY "CoolMaster Net Controller"
+
+//=====// I/O //=====//
+
+DIGITAL_INPUT _SKIP_,
+			  _SKIP_,
+			  ZoneOn,
+			  ZoneOff,
+			  ModeCool,
+			  ModeHeat,
+			  ModeFan,
+			  ModeDry,
+			  ModeAuto,
+			  SetpointUp,
+			  SetpointDown,
+			  FanVeryLow,
+			  FanLow,
+			  FanMed,
+			  FanHigh,
+			  FanTop,
+			  FanAuto;
+
+ANALOG_INPUT SetpointDirect;
+
+DIGITAL_OUTPUT _SKIP_,
+               _SKIP_,
+			   ZoneOn_Fb,
+			   ZoneOff_Fb,
+			   ModeCool_Fb,
+			   ModeHeat_Fb,
+			   ModeFan_Fb,
+			   ModeDry_Fb,
+			   ModeAuto_Fb,
+			   FanVeryLow_Fb,
+			   FanLow_Fb,
+			   FanMed_Fb,
+			   FanHigh_Fb,
+			   FanTop_Fb,
+			   FanAuto_Fb,
+			   Demand_Fb;
+
+ANALOG_OUTPUT Setpoint,
+			  Temperature;
+
+STRING_OUTPUT OnOff$,
+			  Setpoint$,
+			  Temperature$,
+			  FanSpeed$,
+			  SystemMode$;
+
+STRING_PARAMETER ZoneName[32],
+				 UID[6];
+
+//=====// VARIABLES //=====//
+
+Zone Zn;
+
+//=====// FUNCTIONS //=====//
+
+//=====// EVENTS //=====//
+
+PUSH ZoneOn { Zn.SetOnOff(1); }
+PUSH ZoneOff { Zn.SetOnOff(0); }
+PUSH ModeCool { Zn.SetSysMode("cool"); }
+PUSH ModeHeat { Zn.SetSysMode("heat"); }
+PUSH ModeFan { Zn.SetSysMode("fan"); }
+PUSH ModeDry { Zn.SetSysMode("dry"); }
+PUSH ModeAuto { Zn.SetSysMode("auto"); }
+PUSH SetpointUp { Zn.SetpointUpDown(1); }
+PUSH SetpointDown { Zn.SetpointUpDown(0); }
+PUSH FanVeryLow { Zn.SetFanSpeed("v"); }
+PUSH FanLow { Zn.SetFanSpeed("l"); }
+PUSH FanMed { Zn.SetFanSpeed("m"); }
+PUSH FanHigh { Zn.SetFanSpeed("h"); }
+PUSH FanTop { Zn.SetFanSpeed("t"); }
+PUSH FanAuto { Zn.SetFanSpeed("a"); }
+
+CHANGE SetpointDirect {
+	IF(SetpointDirect > 100 && SetpointDirect < 900) {
+    	Zn.SetpointDirect(SetpointDirect);
+	}
+}
+
+//=====// DELEGATE HANDLERS //=====//
+
+CALLBACK FUNCTION ZoneFeedbackHandler (
+					INTEGER _onOff,
+					INTEGER _setPtAna,
+					STRING _setPtStr,
+					INTEGER _tempAna,
+					STRING _tempStr,
+					STRING _fanSpd,
+					STRING _sysMode,
+					INTEGER _demand) {
+    
+	// On/Off
+	IF(_onOff = 1) {
+		OnOff$ = "ON";
+    	ZoneOn_Fb  = 1;
+		ZoneOff_Fb = 0;
+	} ELSE {
+		OnOff$ = "OFF";
+    	ZoneOn_Fb  = 0;
+		ZoneOff_Fb = 1;
+	}
+
+	// Setpoint
+	Setpoint$ = _setPtStr;
+	Setpoint  = _setPtAna;
+
+	// Temperature
+	Temperature$ = _tempStr;
+	Temperature  = _tempAna;
+
+	// Fan Speed
+	FanSpeed$ = _fanSpd;
+	IF(_fanSpd = "VLow") {
+    	FanVeryLow_Fb = 1;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "Low") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 1;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "Med") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 1;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "High") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 1;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "Top") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 1;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "Auto") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 1;
+	}
+         
+	// System Mode
+    SystemMode$ = _sysMode;
+	IF(_sysMode = "Cool") {
+    	ModeCool_Fb = 1;
+		ModeHeat_Fb = 0;
+		ModeFan_Fb  = 0;
+		ModeDry_Fb  = 0;
+		ModeAuto_Fb = 0;
+	} ELSE IF(_sysMode = "Heat") {
+    	ModeCool_Fb = 0;
+		ModeHeat_Fb = 1;
+		ModeFan_Fb  = 0;
+		ModeDry_Fb  = 0;
+		ModeAuto_Fb = 0;
+	} ELSE IF(_sysMode = "Fan") {
+    	ModeCool_Fb = 0;
+		ModeHeat_Fb = 0;
+		ModeFan_Fb  = 1;
+		ModeDry_Fb  = 0;
+		ModeAuto_Fb = 0;
+	} ELSE IF(_sysMode = "Dry") {
+    	ModeCool_Fb = 0;
+		ModeHeat_Fb = 0;
+		ModeFan_Fb  = 0;
+		ModeDry_Fb  = 1;
+		ModeAuto_Fb = 0;
+	} ELSE IF(_sysMode = "Auto") {
+    	ModeCool_Fb = 0;
+		ModeHeat_Fb = 0;
+		ModeFan_Fb  = 0;
+		ModeDry_Fb  = 0;
+		ModeAuto_Fb = 1;
+	}
+
+	// Demand
+	Demand_Fb = _demand;
+
+}
+
+CALLBACK FUNCTION SetpointFeedbackHandler (INTEGER _setPtAna, STRING _setPtStr) {
+
+	Setpoint$ = _setPtStr;
+	Setpoint  = _setPtAna;
+
+}
+
+//=====// MAIN //=====//
+
+FUNCTION Main () {
+
+	WAITFORINITIALIZATIONCOMPLETE();
+
+	Zn.Configure(ZoneName, UID);
+
+	RegisterDelegate(Zn, ZoneFeedbackEvent, ZoneFeedbackHandler);
+	RegisterDelegate(Zn, SetpointFeedbackEvent, SetpointFeedbackHandler);
+
+	IF(Core.RegisterZone(UID, Zn) = 0) {
+    	PRINT("[ERROR] Error registering CoolMaster NET Zone %s!", UID);
+	}
+
+}
+
