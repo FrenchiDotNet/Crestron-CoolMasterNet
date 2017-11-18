@@ -1,4 +1,9 @@
-#socket_echo_server.py
+# CoolMasterTestServer.py
+# Programmer:	Ryan French
+# Description:	This Python script creates a TCP Server that mimics two CoolMaster Net
+#				zones in order to test the Crestron SIMPL# project. It is not necessary
+#				for the Crestron library to work.
+
 import socket
 import sys
 import datetime
