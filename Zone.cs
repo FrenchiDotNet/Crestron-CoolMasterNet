@@ -143,13 +143,18 @@ namespace CoolMaster_NET_Controller {
             Setpoint += _dir == 1 ? 1.0f : -1.0f;
             SetpointRaw = Setpoint.ToString();
 
-            SetpointFeedbackEvent((ushort)(Setpoint * 10), SetpointRaw); 
+            SetpointFeedbackEvent((ushort)(Setpoint * 10), SetpointRaw);
+
+            // Send new setpoint value
+            Core.QueueCommand(String.Format("temp {0} {1}", UID, Setpoint));
 
         }
 
         public void SetpointDirect(ushort _val) {
             Setpoint = ((float)_val)/10;
-            SetpointRaw = Setpoint.ToString();
+            //SetpointRaw = Setpoint.ToString();
+            SetpointRaw = String.Format("{0}.{1}", (int)_val/10, _val%10);
+
             SetpointFeedbackEvent((ushort)(Setpoint * 10), SetpointRaw);
             Core.QueueCommand(String.Format("temp {0} {1}", UID, Setpoint));
         }
@@ -160,9 +165,6 @@ namespace CoolMaster_NET_Controller {
 
             // Release setpoint lock
             lockSetpoint = false;
-
-            // Send new setpoint value
-            Core.QueueCommand(String.Format("temp {0} {1}", UID, Setpoint));
 
         }
 

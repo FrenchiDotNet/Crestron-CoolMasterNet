@@ -77,9 +77,9 @@ while True:
 			data = connection.recv(16)
 			
 			strin = data.decode('ascii')
+			print('[%s] Received command: %s' % (str(datetime.datetime.now()), strin))
 			
 			if strin == 'ls2\r\n':
-				print('[%s] Received ls2 command!' % str(datetime.datetime.now()))
 				connection.sendall(str.encode("%s%s" % (z1.getpollstring(), z2.getpollstring())))
 			elif "temp" in strin:
 				targuid = strin[5:11]

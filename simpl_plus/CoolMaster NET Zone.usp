@@ -88,6 +88,8 @@ PUSH FanAuto { Zn.SetFanSpeed("a"); }
 CHANGE SetpointDirect {
 	IF(SetpointDirect > 100 && SetpointDirect < 900) {
     	Zn.SetpointDirect(SetpointDirect);
+	} ELSE IF (SetpointDirect > 10 && SetpointDirect < 90) {
+    	Zn.SetpointDirect(SetpointDirect * 10);
 	}
 }
 
@@ -102,6 +104,11 @@ CALLBACK FUNCTION ZoneFeedbackHandler (
 					STRING _fanSpd,
 					STRING _sysMode,
 					INTEGER _demand) {
+
+	INTEGER SetpointIntegral,
+			SetpointDecimal,
+			TemperatureIntegral,
+			TemperatureDecimal;
     
 	// On/Off
 	IF(_onOff = 1) {
@@ -115,11 +122,21 @@ CALLBACK FUNCTION ZoneFeedbackHandler (
 	}
 
 	// Setpoint
-	Setpoint$ = _setPtStr;
+	SetpointIntegral = ATOI(LEFT(_setPtStr, FIND(".",_setPtStr)-1));
+	SetpointDecimal  = ATOI(RIGHT(_setPtStr, 1));
+	IF(SetpointDecimal >= 5)
+		SetpointIntegral = SetpointIntegral + 1;
+
+	Setpoint$ = ITOA(SetpointIntegral);
 	Setpoint  = _setPtAna;
 
 	// Temperature
-	Temperature$ = _tempStr;
+	TemperatureIntegral = ATOI(LEFT(_tempStr, FIND(".",_tempStr)-1));
+	TemperatureDecimal  = ATOI(RIGHT(_tempStr, 1));
+	IF(TemperatureDecimal >= 5)
+		TemperatureIntegral = TemperatureIntegral + 1;
+
+	Temperature$ = ITOA(TemperatureIntegral);
 	Temperature  = _tempAna;
 
 	// Fan Speed
@@ -209,7 +226,15 @@ CALLBACK FUNCTION ZoneFeedbackHandler (
 
 CALLBACK FUNCTION SetpointFeedbackHandler (INTEGER _setPtAna, STRING _setPtStr) {
 
-	Setpoint$ = _setPtStr;
+	INTEGER SetpointIntegral,
+			SetpointDecimal;
+
+	SetpointIntegral = ATOI(LEFT(_setPtStr, FIND(".",_setPtStr)-1));
+	SetpointDecimal  = ATOI(RIGHT(_setPtStr, 1));
+	IF(SetpointDecimal >= 5)
+		SetpointIntegral = SetpointIntegral + 1;
+
+	Setpoint$ = ITOA(SetpointIntegral);
 	Setpoint  = _setPtAna;
 
 }
