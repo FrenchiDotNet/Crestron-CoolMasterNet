@@ -95,7 +95,7 @@ CHANGE SetpointDirect {
 
 //=====// DELEGATE HANDLERS //=====//
 
-CALLBACK FUNCTION ZoneFeedbackHandler (
+CALLBACK FUNCTION ZoneFeedbackHandler ( // DEPRECATED
 					INTEGER _onOff,
 					INTEGER _setPtAna,
 					STRING _setPtStr,
@@ -224,18 +224,137 @@ CALLBACK FUNCTION ZoneFeedbackHandler (
 
 }
 
-CALLBACK FUNCTION SetpointFeedbackHandler (INTEGER _setPtAna, STRING _setPtStr) {
+CALLBACK FUNCTION SetpointFeedbackHandler (INTEGER _integral, INTEGER _decimal) {
+    
+	INTEGER result;
 
-	INTEGER SetpointIntegral,
-			SetpointDecimal;
+	IF(_decimal >= 5)
+		result = _integral + 1;
+	ELSE
+		result = _integral;
 
-	SetpointIntegral = ATOI(LEFT(_setPtStr, FIND(".",_setPtStr)-1));
-	SetpointDecimal  = ATOI(RIGHT(_setPtStr, 1));
-	IF(SetpointDecimal >= 5)
-		SetpointIntegral = SetpointIntegral + 1;
+	Setpoint$ = ITOA(result);
+	Setpoint  = (_integral * 10) + _decimal;
 
-	Setpoint$ = ITOA(SetpointIntegral);
-	Setpoint  = _setPtAna;
+}
+
+CALLBACK FUNCTION TempFeedbackHandler (INTEGER _integral, INTEGER _decimal) {
+
+	INTEGER result;
+
+	IF(_decimal >= 5)
+		result = _integral + 1;
+	ELSE
+		result = _integral;
+
+	Temperature$ = ITOA(result);
+	Temperature  = (_integral * 10) + _decimal;
+
+}
+
+CALLBACK FUNCTION OnOffFeedbackHandler (INTEGER _onoff) {
+
+	IF(_onoff = 1) {
+		OnOff$ = "ON";
+    	ZoneOn_Fb  = 1;
+		ZoneOff_Fb = 0;
+	} ELSE {
+		OnOff$ = "OFF";
+    	ZoneOn_Fb  = 0;
+		ZoneOff_Fb = 1;
+	}
+
+}
+
+CALLBACK FUNCTION DemandFeedbackHandler (INTEGER _demand) {
+
+	Demand_Fb = _demand;
+
+}
+
+CALLBACK FUNCTION FanSpdFeedbackHandler (STRING _fanSpd) {
+
+	FanSpeed$ = _fanSpd;
+	IF(_fanSpd = "VLow") {
+    	FanVeryLow_Fb = 1;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "Low") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 1;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "Med") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 1;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "High") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 1;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "Top") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 1;
+		FanAuto_Fb    = 0;
+	} ELSE IF(_fanSpd = "Auto") {
+    	FanVeryLow_Fb = 0;
+		FanLow_Fb     = 0;
+		FanMed_Fb     = 0;
+		FanHigh_Fb    = 0;
+		FanTop_Fb     = 0;
+		FanAuto_Fb    = 1;
+	}
+
+}
+
+CALLBACK FUNCTION SysModeFeedbackHandler (STRING _sysMode) {
+
+	SystemMode$ = _sysMode;
+	IF(_sysMode = "Cool") {
+    	ModeCool_Fb = 1;
+		ModeHeat_Fb = 0;
+		ModeFan_Fb  = 0;
+		ModeDry_Fb  = 0;
+		ModeAuto_Fb = 0;
+	} ELSE IF(_sysMode = "Heat") {
+    	ModeCool_Fb = 0;
+		ModeHeat_Fb = 1;
+		ModeFan_Fb  = 0;
+		ModeDry_Fb  = 0;
+		ModeAuto_Fb = 0;
+	} ELSE IF(_sysMode = "Fan") {
+    	ModeCool_Fb = 0;
+		ModeHeat_Fb = 0;
+		ModeFan_Fb  = 1;
+		ModeDry_Fb  = 0;
+		ModeAuto_Fb = 0;
+	} ELSE IF(_sysMode = "Dry") {
+    	ModeCool_Fb = 0;
+		ModeHeat_Fb = 0;
+		ModeFan_Fb  = 0;
+		ModeDry_Fb  = 1;
+		ModeAuto_Fb = 0;
+	} ELSE IF(_sysMode = "Auto") {
+    	ModeCool_Fb = 0;
+		ModeHeat_Fb = 0;
+		ModeFan_Fb  = 0;
+		ModeDry_Fb  = 0;
+		ModeAuto_Fb = 1;
+	}
 
 }
 
@@ -249,6 +368,11 @@ FUNCTION Main () {
 
 	RegisterDelegate(Zn, ZoneFeedbackEvent, ZoneFeedbackHandler);
 	RegisterDelegate(Zn, SetpointFeedbackEvent, SetpointFeedbackHandler);
+	RegisterDelegate(Zn, TempFeedbackEvent, TempFeedbackHandler);
+	RegisterDelegate(Zn, OnOffFeedbackEvent, OnOffFeedbackHandler);
+	RegisterDelegate(Zn, DemandFeedbackEvent, DemandFeedbackHandler);
+    RegisterDelegate(Zn, FanSpdFeedbackEvent, FanSpdFeedbackHandler);
+	RegisterDelegate(Zn, SysModeFeedbackEvent, SysModeFeedbackHandler);
 
 	IF(Core.RegisterZone(UID, Zn) = 0) {
     	PRINT("[ERROR] Error registering CoolMaster NET Zone %s!", UID);

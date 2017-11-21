@@ -118,31 +118,27 @@ namespace CoolMaster_NET_Controller {
                     if (Zones.ContainsKey(uid)) {
                         _zn       = Zones[uid];
                         _zn.CorF  = lines[i][15] == 'C' ? "C" : "F";
-                        _zn.OnOff = lines[i].Substring(7, 3).Trim();
+                        _zn.UpdateOnOff (lines[i].Substring(7, 3).Trim());
 
                         if (_zn.CorF == "F") {
                             if (!_zn.lockSetpoint) {
-                                _zn.SetpointRaw = lines[i].Substring(11, 5).TrimStart('0');
-                                _zn.Setpoint    = float.Parse(_zn.SetpointRaw);
+                                _zn.UpdateSetpoint (lines[i].Substring(11, 5).TrimStart('0'));
                             }
-                            _zn.TempRaw    = lines[i].Substring(18, 5).TrimStart('0');
-                            _zn.FanSpeed   = lines[i].Substring(25, 4).Trim();
-                            _zn.SystemMode = lines[i].Substring(30, 4).Trim();
-                            _zn.Demand     = lines[i].Substring(42, 1) == "1" ? true : false;
+                            _zn.UpdateTemp       (lines[i].Substring(18, 5).TrimStart('0'));
+                            _zn.UpdateFanSpeed   (lines[i].Substring(25, 4).Trim());
+                            _zn.UpdateSystemMode (lines[i].Substring(30, 4).Trim());
+                            _zn.UpdateDemand     (lines[i].Substring(42, 1) == "1" ? true : false);
                         } else if (_zn.CorF == "C") {
                             if (!_zn.lockSetpoint) {
-                                _zn.SetpointRaw = lines[i].Substring(11, 4).TrimStart('0');
-                                _zn.Setpoint    = float.Parse(_zn.SetpointRaw);
+                                _zn.UpdateSetpoint (lines[i].Substring(11, 4).TrimStart('0'));
                             }
-                            _zn.TempRaw    = lines[i].Substring(17, 4).TrimStart('0');
-                            _zn.FanSpeed   = lines[i].Substring(23, 4).Trim();
-                            _zn.SystemMode = lines[i].Substring(38, 4).Trim();
-                            _zn.Demand     = lines[i].Substring(40, 1) == "1" ? true : false;
+                            _zn.UpdateTemp       (lines[i].Substring(17, 4).TrimStart('0'));
+                            _zn.UpdateFanSpeed   (lines[i].Substring(23, 4).Trim());
+                            _zn.UpdateSystemMode (lines[i].Substring(38, 4).Trim());
+                            _zn.UpdateDemand     (lines[i].Substring(40, 1) == "1" ? true : false);
                         }
 
-                        _zn.Temp = float.Parse(_zn.TempRaw);
-
-                        _zn.Update();
+                        //_zn.Update();
                     }
 
                 }
@@ -157,8 +153,8 @@ namespace CoolMaster_NET_Controller {
 
         public static void QueueCommand(string _cmd) {
 
-            // Ignore new commands if controller is disconnected
-            if (client.ClientStatus != SocketStatus.SOCKET_STATUS_CONNECTED)
+            // Ignore new commands if controller is disconnected or command is blank
+            if (client.ClientStatus != SocketStatus.SOCKET_STATUS_CONNECTED || _cmd == "")
                 return;
 
             string command = _cmd + "\x0D\x0A";
@@ -220,7 +216,8 @@ namespace CoolMaster_NET_Controller {
         internal static void clientDataTX(TCPClient _cli, int _bytes) {
 
             if (MessageQueue.Count > 0) {
-                client.SendDataAsync(Encoding.ASCII.GetBytes(MessageQueue[0]), MessageQueue[0].Length, clientDataTX);
+                if(MessageQueue[0] != "")
+                    client.SendDataAsync(Encoding.ASCII.GetBytes(MessageQueue[0]), MessageQueue[0].Length, clientDataTX);
                 MessageQueue.RemoveAt(0);
             } else {
                 waitForTx = false;
@@ -277,6 +274,9 @@ namespace CoolMaster_NET_Controller {
 
     } // End Core class
 
-    public delegate void DelegateUshortString(ushort value1, SimplSharpString value2);
+    public delegate void DelegateUshortString (ushort value1, SimplSharpString value2);
+    public delegate void DelegateUshort (ushort value);
+    public delegate void DelegateString (SimplSharpString value); 
+    public delegate void DelegateUshortUshort (ushort value1, ushort value2);
 
 }

@@ -40,8 +40,14 @@ namespace CoolMaster_NET_Controller {
                                           ushort demand);
         public ZoneFeedback ZoneFeedbackEvent { get; set; }
 
-        public delegate void SetpointFeedback(ushort SetPtAna, SimplSharpString SetPtStr);
-        public SetpointFeedback SetpointFeedbackEvent { get; set; }
+        public DelegateUshortUshort SetpointFeedbackEvent { get; set; }
+        public DelegateUshortUshort TempFeedbackEvent { get; set; }
+
+        public DelegateUshort OnOffFeedbackEvent { get; set; }
+        public DelegateUshort DemandFeedbackEvent { get; set; }
+
+        public DelegateString FanSpdFeedbackEvent { get; set; }
+        public DelegateString SysModeFeedbackEvent { get; set; }
 
         //===================// Constructor //===================//
 
@@ -80,12 +86,12 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: Update
+        // FUNCTION: Update (DEPRECATED)
         // Description: Called by Core after data for this zone has been
         //              read from the controller
         //-------------------------------------//
 
-        public void Update () {
+        /*public void Update () {
 
             // Send values to S+
             ZoneFeedbackEvent(
@@ -98,6 +104,97 @@ namespace CoolMaster_NET_Controller {
                 SystemMode,
                 (ushort)(Demand ? 1 : 0)
             );
+
+        }*/
+
+        //-------------------------------------//
+        // FUNCTION: UpdateOnOff
+        // Description: Only send update to S+ if state has changed.
+        //-------------------------------------//
+
+        public void UpdateOnOff(string _state) {
+
+            if (_state != OnOff) {
+                OnOff = _state;
+                OnOffFeedbackEvent((ushort)(OnOff == "ON" ? 1 : 0));
+            }
+
+        }
+
+        //-------------------------------------//
+        // FUNCTION: UpdateFanSpeed
+        // Description: Only send update to S+ if state has changed.
+        //-------------------------------------//
+
+        public void UpdateFanSpeed(string _state) {
+
+            if (_state != FanSpeed) {
+                FanSpeed = _state;
+                FanSpdFeedbackEvent(_state);
+            }
+
+        }
+
+        //-------------------------------------//
+        // FUNCTION: UpdateSystemMode
+        // Description: Only send update to S+ if state has changed.
+        //-------------------------------------//
+
+        public void UpdateSystemMode(string _state) {
+
+            if (_state != SystemMode) {
+                SystemMode = _state;
+                SysModeFeedbackEvent(_state);
+            }
+
+        }
+
+        //-------------------------------------//
+        // FUNCTION: UpdateDemand
+        // Description: Only send update to S+ if state has changed.
+        //-------------------------------------//
+
+        public void UpdateDemand(bool _state) {
+
+            if (_state != Demand) {
+                Demand = _state;
+                DemandFeedbackEvent((ushort)(Demand ? 1 : 0));
+            }
+
+        }
+
+        //-------------------------------------//
+        // FUNCTION: UpdateSetpoint
+        // Description: Only send update to S+ if state has changed.
+        //-------------------------------------//
+
+        public void UpdateSetpoint(string _raw) {
+
+            if (_raw != SetpointRaw) {
+                SetpointRaw = _raw;
+                Setpoint    = float.Parse(_raw);
+
+                string[] sp = SetpointRaw.Split('.');
+                SetpointFeedbackEvent(ushort.Parse(sp[0]), ushort.Parse(sp[1]));
+            }
+
+        }
+
+        //-------------------------------------//
+        // FUNCTION: UpdateTemp
+        // Description: Only send update to S+ if state has changed.
+        //-------------------------------------//
+
+        public void UpdateTemp(string _raw) {
+
+            if (_raw != TempRaw) {
+                TempRaw = _raw;
+                Temp = float.Parse(_raw);
+
+                string[] tmp =  TempRaw.Split('.');
+
+                TempFeedbackEvent(ushort.Parse(tmp[0]), ushort.Parse(tmp[1]));
+            }
 
         }
 
@@ -141,9 +238,10 @@ namespace CoolMaster_NET_Controller {
 
             // Update local variable
             Setpoint += _dir == 1 ? 1.0f : -1.0f;
-            SetpointRaw = Setpoint.ToString();
+            SetpointRaw = getStringValue(Setpoint);
 
-            SetpointFeedbackEvent((ushort)(Setpoint * 10), SetpointRaw);
+            string[] sp = SetpointRaw.Split('.');
+            SetpointFeedbackEvent(ushort.Parse(sp[0]), ushort.Parse(sp[1]));
 
             // Send new setpoint value
             Core.QueueCommand(String.Format("temp {0} {1}", UID, Setpoint));
@@ -151,12 +249,21 @@ namespace CoolMaster_NET_Controller {
         }
 
         public void SetpointDirect(ushort _val) {
-            Setpoint = ((float)_val)/10;
-            //SetpointRaw = Setpoint.ToString();
-            SetpointRaw = String.Format("{0}.{1}", (int)_val/10, _val%10);
 
-            SetpointFeedbackEvent((ushort)(Setpoint * 10), SetpointRaw);
+            Setpoint = ((float)_val)/10;
+            SetpointRaw = getStringValue(Setpoint);
+
+            string[] sp = SetpointRaw.Split('.');
+            SetpointFeedbackEvent(ushort.Parse(sp[0]), ushort.Parse(sp[1]));
             Core.QueueCommand(String.Format("temp {0} {1}", UID, Setpoint));
+        }
+
+        internal static string getStringValue(float _val) {
+
+            float correction = _val < 100 ? _val * 10 : _val;
+
+            return String.Format("{0}.{1}", (int)correction / 10, correction % 10);
+
         }
 
         //===================// Event Handlers //===================//
