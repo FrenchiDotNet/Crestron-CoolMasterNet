@@ -1,4 +1,11 @@
-﻿using System;
+﻿/*
+**        File | Core.cs 
+**      Author | Ryan French
+** Description | Core class handles connection/communication woith remote hardware via TCP, and holds references
+**               to Zone class instances.
+*/
+
+using System;
 using System.Text;
 using System.Collections.Generic;
 using Crestron.SimplSharp;
@@ -39,8 +46,9 @@ namespace CoolMaster_NET_Controller {
         //===================// Methods //===================//
 
         //-------------------------------------//
-        // FUNCTION: TCPClientSettings
-        // Description: ...
+        //    Function | TCPClientSettings
+        // Description | Called by Core S+ symbol to pass TCP client settings from SIMPL program, then 
+        //               attempts to connect.
         //-------------------------------------//
 
         public static void TCPClientSettings(string _ip, ushort _prt) {
@@ -57,8 +65,8 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: RegisterZone
-        // Description: ...
+        //    Function | RegisterZone
+        // Description | Called by Zone S+ symbols to add references to Zone class objects to dictionary.
         //-------------------------------------//
 
         public static ushort RegisterZone (string _uid, Zone _zone) {
@@ -73,8 +81,8 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: DeviceConnect
-        // Description: ...
+        //    Function | DeviceConnect
+        // Description | Attempts to connect to remote device.
         //-------------------------------------//
 
         internal static void DeviceConnect () {
@@ -92,8 +100,10 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: ParseData
-        // Description: ...
+        //    Function | ParseFeedback
+        // Description | Receives data from RX event handler and extracts data points per API specification 
+        //               from manufacturer. Passes extracted data to Zone object with matching UID in 
+        //               Zones dictionary.
         //-------------------------------------//
 
         internal static void ParseFeedback(string _data) {
@@ -121,24 +131,23 @@ namespace CoolMaster_NET_Controller {
                         _zn.UpdateOnOff (lines[i].Substring(7, 3).Trim());
 
                         if (_zn.CorF == "F") {
-                            if (!_zn.lockSetpoint) {
+                            if (!_zn.lockSetpoint) 
                                 _zn.UpdateSetpoint (lines[i].Substring(11, 5).TrimStart('0'));
-                            }
+
                             _zn.UpdateTemp       (lines[i].Substring(18, 5).TrimStart('0'));
                             _zn.UpdateFanSpeed   (lines[i].Substring(25, 4).Trim());
                             _zn.UpdateSystemMode (lines[i].Substring(30, 4).Trim());
                             _zn.UpdateDemand     (lines[i].Substring(42, 1) == "1" ? true : false);
                         } else if (_zn.CorF == "C") {
-                            if (!_zn.lockSetpoint) {
+                            if (!_zn.lockSetpoint)
                                 _zn.UpdateSetpoint (lines[i].Substring(11, 4).TrimStart('0'));
-                            }
+
                             _zn.UpdateTemp       (lines[i].Substring(17, 4).TrimStart('0'));
                             _zn.UpdateFanSpeed   (lines[i].Substring(23, 4).Trim());
                             _zn.UpdateSystemMode (lines[i].Substring(38, 4).Trim());
                             _zn.UpdateDemand     (lines[i].Substring(40, 1) == "1" ? true : false);
                         }
 
-                        //_zn.Update();
                     }
 
                 }
@@ -147,8 +156,10 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: QueueCommand
-        // Description: ...
+        //    Function | QueueCommand
+        // Description | Formats outgoing commands before checking if a current send action is 
+        //               in progress by the TCP client. If so, it appends the command to the 
+        //               message queue, otherwise it sends it immediately.
         //-------------------------------------//
 
         public static void QueueCommand(string _cmd) {
@@ -171,8 +182,10 @@ namespace CoolMaster_NET_Controller {
         //===================// Event Handlers //===================//
 
         //-------------------------------------//
-        // EVENTHANDLER: clientSocketChange
-        // Description: ...
+        //    Function | clientSocketChange
+        // Description | Event handler for TCP client socket status. If socket disconnects, function 
+        //               attempts to reconnect and starts timer to re-attempt connection every 15s.
+        //               Also sends connection status (H/L) to SIMPL.
         //-------------------------------------//
 
         internal static void clientSocketChange(TCPClient _cli, SocketStatus _status) {
@@ -193,8 +206,9 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // EVENTHANDLER: clientDataRX
-        // Description: ...
+        //    Function | clientDataRX
+        // Description | Called asynchronously by TCP client on receive. Decodes incoming byte stream,
+        //               verifies the data, then sends to ParseFeedback for extraction.
         //-------------------------------------//
 
         internal static void clientDataRX(TCPClient _cli, int _bytes) {
@@ -209,8 +223,9 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // EVENTHANDLER: clientDataTX
-        // Description: ...
+        //    Function | clientDataTX
+        // Description | Called asynchronously by TCP client on send. Sends the next
+        //               message in MessageQueue if available.
         //-------------------------------------//
 
         internal static void clientDataTX(TCPClient _cli, int _bytes) {
@@ -226,47 +241,45 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // EVENTHANDLER: clientConnect
-        // Description: ...
+        //    Function | clientConnect
+        // Description | Handler for TCP client connect event. Begins listening for incoming 
+        //               data from server, and starts timer for polling
         //-------------------------------------//
 
         internal static void clientConnect (TCPClient _cli) {
 
             client.ReceiveDataAsync(clientDataRX);
-
-            // Start poll timer
             pollTimer = new CTimer(pollTimerHandler, 2000);
 
         }
 
         //-------------------------------------//
-        // EVENTHANDLER: pollTimerHandler
-        // Description: ...
+        //    Function | pollTimerHandler
+        // Description | Sends request for current HVAC system state, then resets timer 
+        //               for next poll.
         //-------------------------------------//
 
         internal static void pollTimerHandler (object o) {
             
-            // Send ls2 command
             if(client.ClientStatus == SocketStatus.SOCKET_STATUS_CONNECTED) {
-                byte[] data = new byte[5];
-                client.SendDataAsync(Encoding.ASCII.GetBytes("ls2\x0D\x0A"), 5, clientDataTX);
-
-                // Reset timer
+                //byte[] data = new byte[5];
+                //client.SendDataAsync(Encoding.ASCII.GetBytes("ls2\x0D\x0A"), 5, clientDataTX);
+                QueueCommand("ls2");
                 pollTimer = new CTimer(pollTimerHandler, 2000);
             }
 
         }
 
         //-------------------------------------//
-        // EVENTHANDLER: reconnectTimerHandler
-        // Description: ...
+        //    Function | reconnectTimerHandler
+        // Description | If TCP client hasn't connected yet, try again and reset timer 
+        //               for next attempt.
         //-------------------------------------//
 
         internal static void reconnectTimerHandler(object o) {
 
             if (client.ClientStatus != SocketStatus.SOCKET_STATUS_CONNECTED) {
                 DeviceConnect();
-                // Reset timer
                 reconnectTimer = new CTimer(reconnectTimerHandler, 15000);
             }
 

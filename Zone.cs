@@ -1,4 +1,11 @@
-﻿using System;
+﻿/*
+**        File | Zone.cs 
+**      Author | Ryan French
+** Description | Zone class stores variables specific to a single HVAC zone, and facilitates communication
+**               between SIMPL and the Core class via delegates.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -74,8 +81,8 @@ namespace CoolMaster_NET_Controller {
         //===================// Methods //===================//
 
         //-------------------------------------//
-        // FUNCTION: SetUID
-        // Description: ...
+        //    Function | Configure
+        // Description | Called by Zone S+ symbol to populate Name and UID variables.
         //-------------------------------------//
 
         public void Configure(string _name, string _uid) {
@@ -86,9 +93,9 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: Update (DEPRECATED)
-        // Description: Called by Core after data for this zone has been
-        //              read from the controller
+        //    Function | Update (DEPRECATED)
+        // Description | Called by Core after data for this zone has been
+        //               read from the controller
         //-------------------------------------//
 
         /*public void Update () {
@@ -108,8 +115,8 @@ namespace CoolMaster_NET_Controller {
         }*/
 
         //-------------------------------------//
-        // FUNCTION: UpdateOnOff
-        // Description: Only send update to S+ if state has changed.
+        //    Function | UpdateOnOff
+        // Description | Only send update to S+ if state has changed.
         //-------------------------------------//
 
         public void UpdateOnOff(string _state) {
@@ -122,8 +129,8 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: UpdateFanSpeed
-        // Description: Only send update to S+ if state has changed.
+        //    Function | UpdateFanSpeed
+        // Description | Only send update to S+ if state has changed.
         //-------------------------------------//
 
         public void UpdateFanSpeed(string _state) {
@@ -136,8 +143,8 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: UpdateSystemMode
-        // Description: Only send update to S+ if state has changed.
+        //    Function | UpdateSystemMode
+        // Description | Only send update to S+ if state has changed.
         //-------------------------------------//
 
         public void UpdateSystemMode(string _state) {
@@ -150,8 +157,8 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: UpdateDemand
-        // Description: Only send update to S+ if state has changed.
+        //    Function | UpdateDemand
+        // Description | Only send update to S+ if state has changed.
         //-------------------------------------//
 
         public void UpdateDemand(bool _state) {
@@ -164,8 +171,8 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: UpdateSetpoint
-        // Description: Only send update to S+ if state has changed.
+        //    Function | UpdateSetpoint
+        // Description | Only send update to S+ if state has changed.
         //-------------------------------------//
 
         public void UpdateSetpoint(string _raw) {
@@ -181,8 +188,8 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: UpdateTemp
-        // Description: Only send update to S+ if state has changed.
+        //    Function | UpdateTemp
+        // Description | Only send update to S+ if state has changed.
         //-------------------------------------//
 
         public void UpdateTemp(string _raw) {
@@ -199,8 +206,8 @@ namespace CoolMaster_NET_Controller {
         }
 
         //-------------------------------------//
-        // FUNCTION: SetOnOff
-        // Description: ...
+        //    Function | SetOnOff
+        // Description | Receive user input from S+
         //-------------------------------------//
 
         public void SetOnOff(ushort _state) {
@@ -209,17 +216,32 @@ namespace CoolMaster_NET_Controller {
 
         }
 
+        //-------------------------------------//
+        //    Function | SetSysMode
+        // Description | Receive user input from S+
+        //-------------------------------------//
+
         public void SetSysMode(string _state) {
 
             Core.QueueCommand(String.Format("{0} {1}", _state, UID));
 
         }
 
+        //-------------------------------------//
+        //    Function | SetFanSpeed
+        // Description | Receive user input from S+
+        //-------------------------------------//
+
         public void SetFanSpeed(string _state) {
 
             Core.QueueCommand(String.Format("fspeed {0} {1}", UID, _state));
 
         }
+
+        //-------------------------------------//
+        //    Function | SetpointUpDown
+        // Description | Receive user input from S+
+        //-------------------------------------//
 
         public void SetpointUpDown(ushort _dir) {
 
@@ -248,6 +270,11 @@ namespace CoolMaster_NET_Controller {
 
         }
 
+        //-------------------------------------//
+        //    Function | SetpointDirect
+        // Description | Receive user input from S+
+        //-------------------------------------//
+
         public void SetpointDirect(ushort _val) {
 
             Setpoint = ((float)_val)/10;
@@ -257,6 +284,11 @@ namespace CoolMaster_NET_Controller {
             SetpointFeedbackEvent(ushort.Parse(sp[0]), ushort.Parse(sp[1]));
             Core.QueueCommand(String.Format("temp {0} {1}", UID, Setpoint));
         }
+
+        //-------------------------------------//
+        //    Function | getStringValue
+        // Description | Converts float representation of setpoint to string with single decimal point (000.0)
+        //-------------------------------------//
 
         internal static string getStringValue(float _val) {
 
@@ -268,9 +300,13 @@ namespace CoolMaster_NET_Controller {
 
         //===================// Event Handlers //===================//
 
+        //-------------------------------------//
+        //    Function | SetpointLockoutExpired
+        // Description | Releases lock on accepting incoming setpoint value from remove server.
+        //-------------------------------------//
+
         internal void SetpointLockoutExpired(object o) {
 
-            // Release setpoint lock
             lockSetpoint = false;
 
         }
