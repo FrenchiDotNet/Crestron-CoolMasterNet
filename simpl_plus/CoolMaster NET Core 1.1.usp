@@ -3,7 +3,7 @@ Dealer Name: Ask The Advisors
 Programmer: Ryan French
 */
 
-#SYMBOL_NAME "CoolMaster Net Core v1.0"
+#SYMBOL_NAME "CoolMaster Net Core v1.1"
 #DEFAULT_VOLATILE
 #ENABLE_STACK_CHECKING
 #ENABLE_TRACE
@@ -17,7 +17,13 @@ DIGITAL_OUTPUT Connected_Fb;
 STRING_PARAMETER _SKIP_,
 			     IP_Address[15];
 
-INTEGER_PARAMETER Port;
+INTEGER_PARAMETER Port,
+				  Rounding;
+
+#BEGIN_PARAMETER_PROPERTIES Rounding
+	PROPDEFAULTVALUE = 0d;
+	PROPLIST = {0d,"Disabled"}, {1d,"Enabled"};
+#END_PARAMETER_PROPERTIES
 
 //=====// VARIABLES //=====//
 
@@ -36,7 +42,8 @@ FUNCTION Main () {
 	WAITFORINITIALIZATIONCOMPLETE();
 
 	RegisterDelegate(Core, ConnectionStatusEvent, ConnectionStatusHandler);
-
+                                             
+	Core.doRound = Rounding;
 	Core.TCPClientSettings(IP_Address, Port);
 
 }

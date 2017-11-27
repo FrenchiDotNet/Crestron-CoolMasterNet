@@ -1,6 +1,7 @@
-# CoolMasterTestServer.py
-# Programmer:	Ryan French
-# Description:	This Python script creates a TCP Server that mimics two CoolMaster Net
+#
+#        File | CoolMasterTestServer.py
+#      Author |	Ryan French
+# Description |	This Python script creates a TCP Server that mimics two CoolMaster Net
 #				zones in order to test the Crestron SIMPL# project. It is not necessary
 #				for the Crestron library to work.
 
@@ -10,6 +11,8 @@ import datetime
 import random
 from threading import Timer
 
+
+# Get computer info from prompt
 server_ip   = input("IP Address: ")
 server_port = int(input("Port: "));
 
@@ -68,12 +71,10 @@ Timer(10, NudgeTempFb).start()
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# Bind the socket to the port
 server_address = (server_ip, server_port)
 print('starting up on {} port {}'.format(*server_address))
 sock.bind(server_address)
 
-# Listen for incoming connections
 sock.listen(1)
 
 while True:
@@ -84,9 +85,9 @@ while True:
 	try:
 		print('connection from', client_address)
 		
-		# Receive the data in small chunks and retransmit it
+		# Receive the data
 		while True:
-			data = connection.recv(16)
+			data = connection.recv(64)
 			
 			strin = data.decode('ascii')
 			

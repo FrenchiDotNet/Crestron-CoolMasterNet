@@ -1,7 +1,7 @@
 ﻿/*
 **        File | Core.cs 
 **      Author | Ryan French
-** Description | Core class handles connection/communication woith remote hardware via TCP, and holds references
+** Description | Core class handles connection/communication with remote hardware via TCP, and holds references
 **               to Zone class instances.
 */
 
@@ -21,6 +21,7 @@ namespace CoolMaster_NET_Controller {
         internal static int    port;
         internal static bool   okToConnect;
         internal static bool   waitForTx;
+        public static ushort doRound;
 
         internal static Dictionary<string, Zone> Zones;
         internal static List<string> MessageQueue;
@@ -30,9 +31,7 @@ namespace CoolMaster_NET_Controller {
 
         internal static TCPClient client;
 
-        public delegate void ConnectionStatus(ushort status);
-        public static ConnectionStatus ConnectionStatusEvent { get; set; }
-
+        public static DelegateUshort ConnectionStatusEvent { get; set; }
 
         //===================// Constructor //===================//
 
